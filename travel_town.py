@@ -31,7 +31,7 @@ def getImageMachPosition(imgOriginalPath, imgMatchPath):
 def getKeyBoardInput():
     settings = termios.tcgetattr(sys.stdin)
     tty.setraw(sys.stdin.fileno())
-    rlist, _, _ = select.select([sys.stdin], [], [], 0.5)
+    rlist, _, _ = select.select([sys.stdin], [], [], 0.3)
     if rlist:
         key = sys.stdin.read(1)
     else:
