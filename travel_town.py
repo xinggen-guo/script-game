@@ -102,7 +102,7 @@ def refreshMoneyMeathod():
     productX = relativeProductBtnPos[0] * screen_w
     productY = relativeProductBtnPos[1] * screen_h
 
-    sellProductByCount(productX, productY, selloutX, selloutY, 500)
+    sellProductByCount(productX, productY, selloutX, selloutY, 1000)
 
 
 
