@@ -68,13 +68,14 @@ Useful commands:
 
 `deploy_v2ray_subscription.sh`
 
-Deploys a simple VPS-based V2Ray service and a Clash subscription endpoint.
+Deploys a VPS-based V2Ray service and a tracked Clash subscription endpoint.
 
 What it does:
 - generates a random UUID
 - installs V2Ray
 - writes `/etc/v2ray/config.json`
 - writes `/opt/v2ray-sub/clash.yaml`
+- writes `/opt/v2ray-sub/server.py`
 - installs `v2ray.service`
 - installs `v2ray-sub.service`
 - prints the final VMess link and subscription URL
@@ -84,7 +85,31 @@ Current server shape used in this project:
 - transport: `ws`
 - port: `443`
 - path: `/v2ray`
-- subscription URL: `http://SERVER_IP:8088/clash.yaml`
+- direct root `http://SERVER_IP:8088/clash.yaml` is blocked
+- per-user subscriptions are served from `http://SERVER_IP:8088/profiles/<path>.yaml`
+
+`deploy_v2ray_user_manager.sh`
+
+Deploys the web admin page for user management.
+
+What it does:
+- installs the manager app under `/opt/v2ray-user-manager`
+- installs `v2ray-user-manager.service`
+- exposes the manager page on port `8091`
+- manages per-user Clash subscriptions under `/opt/v2ray-sub/profiles/*.yaml`
+- preserves existing user paths and only generates calculated new paths for new users
+- restarts `v2ray.service` automatically after add/remove so new users work immediately
+
+`deploy_v2ray_full_stack.sh`
+
+Deploys the whole current V2Ray stack in one step.
+
+What it does:
+- deploys the base V2Ray service and main subscription
+- enables the local V2Ray stats API on `127.0.0.1:10085`
+- deploys the admin page
+- syncs per-user subscription files
+- prints the final subscription URL and manager login
 
 `check_v2ray_status.sh`
 
@@ -136,6 +161,8 @@ For the VPS deploy helpers:
 
 ```bash
 bash deploy_v2ray_subscription.sh
+bash deploy_v2ray_user_manager.sh
+bash deploy_v2ray_full_stack.sh
 bash check_v2ray_status.sh
 ```
 
@@ -146,56 +173,14 @@ python3 v2ray_dashboard.py
 bash deploy_v2ray_dashboard.sh
 ```
 
-## V2Ray Project Notes
+## V2Ray Docs
 
-This repo now contains enough scripts to act as a small deployment base for a personal VPS proxy service.
+The VPS proxy workflow is now split by function:
 
-### Current Architecture
-
-- V2Ray runtime config lives at `/etc/v2ray/config.json`
-- Clash subscription lives at `/opt/v2ray-sub/clash.yaml`
-- Subscription is served by a simple Python HTTP server on port `8088`
-- Main `systemd` services:
-  - `v2ray.service`
-  - `v2ray-sub.service`
-
-### Current Clash Subscription Direction
-
-The generated subscription is designed to support:
-- Google services
-- OpenAI / ChatGPT / Codex
-- Claude / Anthropic
-- Gemini / Google AI
-- Telegram
-- LinkedIn
-
-The rule structure is intentionally simple:
-- local/private direct
-- explicit Google rules
-- explicit AI service rules
-- Telegram rules
-- LinkedIn rules
-- China mainland direct
-- final fallback to the single VPS proxy group
-
-### Main Stability Finding
-
-The most important conclusion from debugging this setup:
-
-- the Clash rules are mostly fine
-- DNS was improved with a fallback block
-- the main instability is the current server transport itself
-
-Current transport:
-- `vmess + ws + no TLS` on port `443`
-
-Observed server log problems included:
-- `unexpected EOF`
-- `failed to read request header`
-- `i/o timeout`
-- `connection reset by peer`
-
-So this repo is useful for deploying the current service, but the next real upgrade should be protocol-level rather than only rule-level.
+- [Deploy Guide](docs/v2ray-deploy-guide.md)
+- [Architecture](docs/v2ray-architecture.md)
+- [Manager](docs/v2ray-manager.md)
+- [Operations](docs/v2ray-operations.md)
 
 ### Recommended Future Upgrade
 
